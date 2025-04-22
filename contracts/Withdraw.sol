@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 struct WithdrawInfo {
     uint256 amount;
@@ -46,8 +45,6 @@ contract Withdraw is Ownable {
         bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, info.amount, info.expire, info.payload, info.nonce));
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(info.signature);
         address signer = ecrecover(messageHash, v, r, s);
-        console.log("signer", signer);
-        console.log("signerChecker", _signerChecker);
         require (signer == _signerChecker, InvalidValue("signer is not correct"));
         require(!_nonceChecker[info.nonce], InvalidValue("sign nonce repeated"));
         _nonceChecker[info.nonce] = true;
