@@ -10,7 +10,7 @@ async function main(){
 
    
     
-    const provider = new ethers.JsonRpcProvider(process.env.ArbRpc as string)
+    const provider = new ethers.JsonRpcProvider(process.env.BNBMain as string)
     const sender = new ethers.Wallet(process.env.BaseSepoliaAccount as string, provider)
     const b = buyContract.connect(sender)
     const ret = await b.transferOwnership("0xB3Fd9d6E30c601349FA5e0eCC9eCED372935d598")
