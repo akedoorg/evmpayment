@@ -8,10 +8,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "hardhat/console.sol";
 
 struct WithdrawInfo {
-    uint256 t;
+    address token;
     uint256 amount;
     uint256 expire;
     string  payload;
@@ -23,17 +22,14 @@ contract Withdraw is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     using SafeERC20 for IERC20;
 
-    event WithdrawEvent(address indexed from, uint256 t, uint256 value, bytes payload);
+    event WithdrawEvent(address indexed from, address indexed token, uint256 value, bytes payload);
     
     address private _signerChecker;
-    address public tokenAddress;
-
     mapping(uint256 => bool) private _nonceChecker;
    
     function initialize() public initializer {
         __Ownable_init(msg.sender); 
         __UUPSUpgradeable_init(); 
-        console.log("initialize");
     }
 
     receive() external payable {
@@ -59,7 +55,7 @@ contract Withdraw is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function  _withdrawInfoCheck(WithdrawInfo calldata info) internal returns(bool){
         //check signature
-        bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, info.t, info.amount, info.expire, info.payload, info.nonce));
+        bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, info.token, info.amount, info.expire, info.payload, info.nonce));
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(info.signature);
         address signer = ecrecover(messageHash, v, r, s);
         require(signer == _signerChecker, "error1");
@@ -72,14 +68,14 @@ contract Withdraw is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function userWithdraw(WithdrawInfo calldata info) external {
        if(_withdrawInfoCheck(info)){
-            if(info.t == 0){
+            if(info.token == address(0)){
                 (bool success, ) = msg.sender.call{value: info.amount}("");
                 require(success, "error4");
-            }else if( info.t == 1){
-                IERC20 token = IERC20(tokenAddress); 
+            }else if( info.token != address(0)){
+                IERC20 token = IERC20(info.token); 
                 token.safeTransfer(msg.sender, info.amount); 
             } 
-            emit WithdrawEvent(msg.sender, info.t, info.amount, bytes(info.payload));
+            emit WithdrawEvent(msg.sender, info.token, info.amount, bytes(info.payload));
        }  
     }
 
@@ -87,17 +83,14 @@ contract Withdraw is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         _signerChecker = checker;
     }
 
-     function setTokenAddress(address token) external onlyOwner {
-        tokenAddress = token;
-    }
 
     /// @notice 
-    function withdraw( uint256 t) external onlyOwner {
-        if(t == 0){
+    function withdraw( address t) external onlyOwner {
+        if(t == address(0)){
             (bool success, ) = payable(owner()).call{value: address(this).balance}("");
             require(success, "Transfer failed.");
-        }else if(t == 1){
-            IERC20 token = IERC20(tokenAddress); 
+        }else{
+            IERC20 token = IERC20(t); 
             token.safeTransfer(owner(), token.balanceOf(address(this))); 
         }
     }

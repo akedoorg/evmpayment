@@ -40,8 +40,8 @@ describe("Lock", function () {
     console.log("token adress", await token.getAddress())
 
     await lock.setSignerChecker("0x20c7Ba88f53BE5491EE73E34e02F30836C764721")
-    await lock.setTokenAddress(await token.getAddress())
-    return { lock, token, owner, otherAccount, defaultTokenCount };
+    const tokenAddress = await token.getAddress()
+    return { lock, token, owner, otherAccount, defaultTokenCount, tokenAddress };
   }
 
   //0x27d54922e37914519efa4483bd1c76b121c409fa67ce188c993c1dbf39e74d6619196a7375dbdbc50617c5658af76b59807248c292d170070444e47c5355e8d81c
@@ -52,7 +52,7 @@ describe("Lock", function () {
     });
 
     it("userwithdraw signature error", async function () {
-      const { lock, token, owner , otherAccount, defaultTokenCount} = await loadFixture(deployOneYearLockFixture);
+      const { lock, token, owner , otherAccount, defaultTokenCount, tokenAddress} = await loadFixture(deployOneYearLockFixture);
 
       const payload = "mock_payload"
       const amount = hre.ethers.parseEther("1")    
@@ -65,7 +65,7 @@ describe("Lock", function () {
       const tx = lc.userWithdraw(
         {
           amount: amount,
-          t: 1,
+          token: tokenAddress,
           expire: expectedUnlockTime,
           nonce: noncew,
           signature: sign,
@@ -83,7 +83,7 @@ describe("Lock", function () {
     });
 
     it("userwithdraw sucess and nonce repeated", async function () {
-      const { lock, token, owner , otherAccount, defaultTokenCount} = await loadFixture(deployOneYearLockFixture);
+      const { lock, token, owner , otherAccount, defaultTokenCount, tokenAddress} = await loadFixture(deployOneYearLockFixture);
 
       const payload = "mock_payload"
       const amount = hre.ethers.parseEther("1.23")  
@@ -96,12 +96,12 @@ describe("Lock", function () {
       const tx = lc.userWithdraw(
         {
           amount: amount,
-          t: 1,
+          token: tokenAddress,
           expire: expectedUnlockTime,
           nonce: noncew,
           signature: sign,
           payload: payload
-        }
+        } 
       )
       await expect(tx)
       .to.emit(lock, "WithdrawEvent")
@@ -118,7 +118,7 @@ describe("Lock", function () {
       const tx2 = lc.userWithdraw(
         {
           amount: amount,
-          t: 1,
+          token: tokenAddress,
           expire: expectedUnlockTime,
           nonce: noncew,
           signature: sign,
@@ -136,7 +136,7 @@ describe("Lock", function () {
     });
 
     it("userwithdraw expire error", async function () {
-      const { lock, token, owner , otherAccount, defaultTokenCount} = await loadFixture(deployOneYearLockFixture);
+      const { lock, token, owner , otherAccount, defaultTokenCount, tokenAddress} = await loadFixture(deployOneYearLockFixture);
 
       const payload = "mock_payload"
       const amount = hre.ethers.parseEther("1.23")    
@@ -149,7 +149,7 @@ describe("Lock", function () {
       const tx = lc.userWithdraw(
         {
           amount: amount,
-          t: 1,
+          token: tokenAddress,
           expire: expectedUnlockTime,
           nonce: noncew,
           signature: sign,
@@ -167,13 +167,13 @@ describe("Lock", function () {
     });
 
     it("withdraw", async function () {
-      const { lock,token, owner , otherAccount} = await loadFixture(deployOneYearLockFixture);
+      const { lock,token, owner , otherAccount, tokenAddress} = await loadFixture(deployOneYearLockFixture);
       const lc = lock.connect(owner)
       const tokenImpl = await hre.ethers.getContractAt("AKEToken", await token.getAddress())
       const lockAddress = await lock.getAddress()
       const lockAmount = await tokenImpl.balanceOf(lockAddress)
       console.log("token impl",lockAmount)
-      await lc.withdraw(1);
+      await lc.withdraw(tokenAddress);
 
       console.log("owner impl", await tokenImpl.balanceOf(await owner.getAddress()))
       expect(await tokenImpl.balanceOf(await owner.getAddress())).to.equal(

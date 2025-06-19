@@ -5,7 +5,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const AKEToken = buildModule("AKEToken", (m) => {
 
-  const akeToken = m.contract("AKEToken",["0x2420bCD3db774993FEca1E0bB95360c9286b764d", 1000000]);
+  const akeToken = m.contract("AKEToken",["0xdF4b9bCe8Fd779a3B1146Be06C8F6E90436a6209", 1000000000000000000000000000n]);
 
 
   return { akeToken };

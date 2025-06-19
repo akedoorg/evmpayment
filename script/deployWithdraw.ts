@@ -15,7 +15,7 @@ async function deployWithdraw() {
 
     const signerChecker = await hre.ethers.getContractAt("Withdraw", poolAddress)
 
-    await signerChecker.setSignerChecker("0x2420bCD3db774993FEca1E0bB95360c9286b764d")
+    // await signerChecker.setSignerChecker("0x2420bCD3db774993FEca1E0bB95360c9286b764d")
 
     console.log("----", poolAddress)
 }
